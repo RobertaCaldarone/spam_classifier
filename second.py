@@ -1,52 +1,52 @@
 #------------------IMPORT DELLE LIBRERIE----------------
 #ciaoflavioeheheheeheh
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.model_selection import train_test_split
-from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-from sklearn.naive_bayes import MultinomialNB
+import pandas as pd # manipolazione e analisi dei dati tabulari
+import numpy as np # calcolo numerico e la manipolazione di array multidimensionali
+import matplotlib.pyplot as plt # per creare grafici personalizzati come istogrammi, scatter plot, e line plot
+import seaborn as sns # grafici più complessi e accattivanti come heatmap, boxplot e pairplot
+from sklearn.model_selection import train_test_split # Divide un dataset in dati di allenamento e di test in modo casuale
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer # calcola il punteggio TF-IDF (Term Frequency-Inverse Document Frequency), che misura l'importanza relativa delle parole
+from sklearn.naive_bayes import MultinomialNB # importa il modello MultinomialNB di Naive Bayes
 from sklearn.metrics import classification_report, confusion_matrix
-import os
-import re
-import nltk
-from nltk.corpus import stopwords
-from nltk.stem import WordNetLemmatizer
+import os # Usata per interagire con il file system, ad esempio leggere directory o file
+import re # Libreria standard di Python per manipolare stringhe e lavorare con espressioni regolari (regex)
+import nltk #  l'elaborazione del linguaggio naturale (NLP)
+from nltk.corpus import stopwords # Contiene elenchi di parole comuni in varie lingue (come "the", "and", "is"), spesso escluse durante l'analisi del testo
+from nltk.stem import WordNetLemmatizer # Usato per ridurre le parole alle loro radici lessicali (es. "running" → "run")
 from sklearn.ensemble import RandomForestClassifier
 from collections import Counter
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
-from xgboost import XGBClassifier
-from sklearn.svm import SVC
-from bs4 import BeautifulSoup
+from xgboost import XGBClassifier # Classificatore basato sull'algoritmo di boosting, ottimizzato per prestazioni e velocità
+from sklearn.svm import SVC # Support Vector Classifier: un modello di machine learning per classificazione che separa i dati con un margine massimo tra le classi
+from bs4 import BeautifulSoup # Libreria per analizzare ed estrarre dati da file HTML e XML
 
 #------------------IMPORT DEI DATASET------------------
 
-easy_ham_path = 'db/easy_ham/easy_ham/'
-hard_ham_path = 'db/hard_ham/hard_ham/'
-spam_path = 'db/spam_2/spam_2/'
+easy_ham_path = 'db/easy_ham/easy_ham/' # Questa directory contiene e-mail "ham" (non spam) che sono relativamente facili da distinguere come non spam
+hard_ham_path = 'db/hard_ham/hard_ham/' # Questa directory contiene e-mail "ham" che sono più difficili da distinguere
+spam_path = 'db/spam_2/spam_2/' # Questa directory contiene e-mail di spam che il modello dovrà imparare a identificare
 
 #-------------LETTURA E CREAZIONE DELLA LISTA-----------
 
-def get_data_with_labels(path, label): 
-    data = [] 
-    files = os.listdir(path) 
-    for file_name in files:
-        file_path = os.path.join(path, file_name)
+def get_data_with_labels(path, label): # Questa funzione prende due parametri : path (percorso della directory che contiene i file delle email) e label (etichetta associata ai file nella directory)
+    data = [] # Inizializza una lista vuota per memorizzare i dati delle e-mail
+    files = os.listdir(path) # Elenca tutti i file nella directory specificata
+    for file_name in files: # Per ogni file nella directory
+        file_path = os.path.join(path, file_name) # Costruisce il percorso completo del file
         try:
-            with open(file_path, encoding="ISO-8859-1") as f: 
-                content = f.read()
-                data.append({'text': content, 'label': label})
+            with open(file_path, encoding="ISO-8859-1") as f: # Prova ad aprire il file con il parametro di codifica ISO-8859-1, che è comune per file di testo non Unicode
+                content = f.read() # Legge il contenuto del file
+                data.append({'text': content, 'label': label}) # Salva il contenuto e l'etichetta in un dizionario e lo aggiunge alla lista data
         except Exception as e:
-            print(f"Errore con il file {file_name}: {e}")
+            print(f"Errore con il file {file_name}: {e}") # In caso di errore durante l'apertura o lettura del file, stampa un messaggio di errore
     return data
 
-easy_ham = get_data_with_labels(easy_ham_path, 'ham')  
-hard_ham = get_data_with_labels(hard_ham_path, 'ham')  
-spam = get_data_with_labels(spam_path, 'spam')  
+easy_ham = get_data_with_labels(easy_ham_path, 'ham') # contiene e-mail non spam dalla directory easy_ham_path con etichetta 'ham'
+hard_ham = get_data_with_labels(hard_ham_path, 'ham') # contiene e-mail non spam più difficili dalla directory hard_ham_path con etichetta 'ham'
+spam = get_data_with_labels(spam_path, 'spam') # contiene e-mail spam dalla directory spam_path con etichetta 'spam'
 
-all_emails = pd.DataFrame(easy_ham + hard_ham + spam)
+all_emails = pd.DataFrame(easy_ham + hard_ham + spam) # Combina le tre liste e pd.DataFrame converte la lista di dizionari in un DataFrame di Pandas per una gestione più comoda dei dati
 
 #------------------ANALISI DEI DATI------------------
 
@@ -63,21 +63,21 @@ nltk.download('stopwords') # Lista di parole comuni da rimuovere
 nltk.download('wordnet') # Dizionario inglese
 all_emails['label'] = all_emails['label'].map({'ham': 0, 'spam': 1})
 
-def remove_email_headers(text):
+def remove_email_headers(text): # Questa funzione rimuove gli header (intestazioni) delle e-mail
     lines = text.splitlines()
     filtered_lines = [line for line in lines if not re.match(r'^\s*(Received|Date|From|To|Subject|Message-ID):', line, re.IGNORECASE)]
     return '\n'.join(filtered_lines)
 
-def extract_email_body(text):
+def extract_email_body(text): # Questa funzione estrae il corpo (contenuto principale) dell'e-mail
     # Usa un pattern per separare il corpo
     body_start = text.find("\n\n")  # Cerca la prima riga vuota che separa header e body
-    if body_start != -1:
+    if body_start != -1: # Se il separatore viene trovato
         return text[body_start:].strip()
     return text
 
 # Funzione di preprocessing
-def preprocess_text(text):
-    text = remove_email_headers(text)
+def preprocess_text(text): # text è una stringa contenente il testo grezzo dell'e-mail
+    text = remove_email_headers(text) 
     text = extract_email_body(text)
     soup = BeautifulSoup(text, "html.parser")  # Rimuovi tag HTML
     text = soup.get_text() # Estrai testo
@@ -96,9 +96,9 @@ all_emails['cleaned_text'] = all_emails['text'].apply(preprocess_text)
 
 #------------------VISUALIZZAZIONE------------------
 
-def plot_common_words(texts, title, n=20):
-    words = ' '.join(texts).split()
-    word_freq = Counter(words).most_common(n)
+def plot_common_words(texts, title, n=20): # calcola le parole più comuni e i rispettivi conteggi
+    words = ' '.join(texts).split() # Unisce tutti i testi e divide il testo in una lista di parole
+    word_freq = Counter(words).most_common(n) # Counter per calcolare la frequenza di ciascuna parola
     words, counts = zip(*word_freq)
 
     plt.figure(figsize=(10, 6))
@@ -109,15 +109,15 @@ def plot_common_words(texts, title, n=20):
     plt.show()
 
 # Visualizza parole per email spam
-spam_emails = all_emails[all_emails['label'] == 1]['cleaned_text']
+spam_emails = all_emails[all_emails['label'] == 1]['cleaned_text'] # Seleziona le email con etichetta 1 (spam) dalla colonna cleaned_text, vengono filtrate e salvate in spam_emails
 plot_common_words(spam_emails, "Parole più comuni nelle email spam")
 
 # Visualizza parole per email non spam
-non_spam_emails = all_emails[all_emails['label'] == 0]['cleaned_text']
+non_spam_emails = all_emails[all_emails['label'] == 0]['cleaned_text'] # Seleziona le email con etichetta 0 (non spam) e salva il risultato in non_spam_emails
 plot_common_words(non_spam_emails, "Parole più comuni nelle email non spam")
 
 # Genera un WordCloud per spam
-spam_words = ' '.join(spam_emails)
+spam_words = ' '.join(spam_emails) # Combina tutte le email di spam in un'unica stringa
 wordcloud_spam = WordCloud(width=800, height=400, background_color='black').generate(spam_words)
 
 plt.figure(figsize=(10, 6))
@@ -127,7 +127,7 @@ plt.title("WordCloud per Email Spam")
 plt.show()
 
 # Genera un WordCloud per non spam
-non_spam_words = ' '.join(non_spam_emails)
+non_spam_words = ' '.join(non_spam_emails) # Combina tutte le email non spam in un'unica stringa
 wordcloud_non_spam = WordCloud(width=800, height=400, background_color='white').generate(non_spam_words)
 
 plt.figure(figsize=(10, 6))
@@ -157,46 +157,46 @@ X_test_tfidf = tfidf_vectorizer.transform(X_test)
 
 # Modello Naive Bayes con Bag of Words
 print("Modello Naive Bayes con Bag of Words")
-model_bag_naive = MultinomialNB()
-model_bag_naive.fit(X_train_bag, y_train)
+model_bag_naive = MultinomialNB() # Inizializza il classificatore Naive Bayes Multinomiale
+model_bag_naive.fit(X_train_bag, y_train) # Addestra il modello usando il dataset di addestramento X_train_bag (matrice Bag of Words) e le etichette y_train
 print("Accuratezza con Naive Bayes - Bag of Words:", model_bag_naive.score(X_test_bag, y_test))
 
-y_pred_bag = model_bag_naive.predict(X_test_bag)
+y_pred_bag = model_bag_naive.predict(X_test_bag) # Effettua previsioni sull'insieme di test X_test_bag
 print("Report di classificazione con Naive Bayes - Bag of Words:")
 print(classification_report(y_test, y_pred_bag))
 
-conf_matrix_bag = confusion_matrix(y_test, y_pred_bag)
-sns.heatmap(conf_matrix_bag, annot=True, fmt='d', cmap='Blues')
+conf_matrix_bag = confusion_matrix(y_test, y_pred_bag) # Genera la matrice di confusione, che mostra:valori veri positivi (TP),Valori veri negativi (TN),falsi positivi (FP),falsi negativi (FN)
+sns.heatmap(conf_matrix_bag, annot=True, fmt='d', cmap='Blues') # Visualizza la matrice di confusione in formato grafico, con annotazioni numeriche (annot=True)
 plt.title('Matrice di Confusione con Naive Bayes - Bag of Words')
 plt.show()
 
 # Modello Naive Bayes con TF-IDF
 print("Modello Naive Bayes con TF-IDF")
-model_tfidf_naive = MultinomialNB()
-model_tfidf_naive.fit(X_train_tfidf, y_train)
+model_tfidf_naive = MultinomialNB() # Utilizza il classificatore Naive Bayes Multinomiale
+model_tfidf_naive.fit(X_train_tfidf, y_train) # Addestra il modello sui dati di training trasformati con TF-ID
 print("Accuratezza con Naive Bayes - TF-IDF:", model_tfidf_naive.score(X_test_tfidf, y_test))
 
-y_pred_tfidf = model_tfidf_naive.predict(X_test_tfidf)
+y_pred_tfidf = model_tfidf_naive.predict(X_test_tfidf) # predict(X_test_tfidf) effettua previsioni sull'insieme di test basandosi sui dati trasformati in TF-IDF
 print("Report di classificazione con Naive Bayes - TF-IDF:")
-print(classification_report(y_test, y_pred_tfidf))
+print(classification_report(y_test, y_pred_tfidf)) # Fornisce una valutazione dettagliata delle prestazioni per ogni classe
 
 conf_matrix_tfidf = confusion_matrix(y_test, y_pred_tfidf)
-sns.heatmap(conf_matrix_tfidf, annot=True, fmt='d', cmap='Oranges')
+sns.heatmap(conf_matrix_tfidf, annot=True, fmt='d', cmap='Oranges') # Utilizza sns.heatmap per rappresentare graficamente la matrice con annotazioni
 plt.title('Matrice di Confusione con Naive Bayes - TF-IDF')
 plt.show()
 
 
 # Modello Random Forest con Bag of Words
 print("Modello Random Forest con Bag of Words")
-model_forest_bag = RandomForestClassifier()
-model_forest_bag.fit(X_train_bag, y_train)
-print("Accuratezza con Random Forest - Bag of Words:", model_forest_bag.score(X_test_bag, y_test))
+model_forest_bag = RandomForestClassifier() # Inizializza il modello Random Forest, un ensemble di alberi decisionali, molto potente per compiti di classificazione
+model_forest_bag.fit(X_train_bag, y_train) # Allena il modello usando i dati di addestramento X_train_bag (matrice Bag of Words) e le etichette y_train
+print("Accuratezza con Random Forest - Bag of Words:", model_forest_bag.score(X_test_bag, y_test)) # score(X_test_bag, y_test) calcola l'accuratezza del modello sui dati di test, confrontando le previsioni fatte dal modello con le etichette vere 
 
-y_pred_bag = model_forest_bag.predict(X_test_bag)
+y_pred_bag = model_forest_bag.predict(X_test_bag) # predict(X_test_bag) esegue delle previsioni sui dati di test per determinare se ogni email è spam o non spam
 print("Report di classificazione con Random Forest - Bag of Words:")
 print(classification_report(y_test, y_pred_bag))
 
-conf_matrix_bag = confusion_matrix(y_test, y_pred_bag)
+conf_matrix_bag = confusion_matrix(y_test, y_pred_bag) # Calcola la matrice di confusione che confronta le etichette reali con le previsioni fatte dal modello
 sns.heatmap(conf_matrix_bag, annot=True, fmt='d', cmap='Blues')
 plt.title('Matrice di Confusione con Random Forest - Bag of Words')
 plt.show()
