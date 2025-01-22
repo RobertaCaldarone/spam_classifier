@@ -203,29 +203,29 @@ plt.show()
 
 # Modello Random Forest con TF-IDF
 print("Modello Random Forest con TF-IDF")
-model_forest_tfidf = RandomForestClassifier()
-model_forest_tfidf.fit(X_train_tfidf, y_train)
-print("Accuratezza con Random Forest - TF-IDF:", model_forest_tfidf.score(X_test_tfidf, y_test))
+model_forest_tfidf = RandomForestClassifier() # Inizializza il classificatore Random Forest
+model_forest_tfidf.fit(X_train_tfidf, y_train) # Addestra il modello sui dati trasformati in TF-IDF (X_train_tfidf) con le etichette corrispondenti y_train
+print("Accuratezza con Random Forest - TF-IDF:", model_forest_tfidf.score(X_test_tfidf, y_test)) # Calcola la percentuale di etichette correttamente classificate nei dati di test trasformati in TF-IDF
 
-y_pred_tfidf = model_forest_tfidf.predict(X_test_tfidf)
+y_pred_tfidf = model_forest_tfidf.predict(X_test_tfidf) #predict genera le previsioni sulle e-mail di test trasformate in TF-IDF assegnando a ciascuna e-mail un'etichetta predetta (spam o non spam)
 print("Report di classificazione con Random Forest - TF-IDF:")
-print(classification_report(y_test, y_pred_tfidf))
+print(classification_report(y_test, y_pred_tfidf)) # Fornisce un report dettagliato sulle prestazioni del modello per ogni classe (spam e non spam)
 
-conf_matrix_tfidf = confusion_matrix(y_test, y_pred_tfidf)
-sns.heatmap(conf_matrix_tfidf, annot=True, fmt='d', cmap='Oranges')
+conf_matrix_tfidf = confusion_matrix(y_test, y_pred_tfidf) # Genera la matrice di confusione
+sns.heatmap(conf_matrix_tfidf, annot=True, fmt='d', cmap='Oranges') # Crea una rappresentazione visiva della matrice 
 plt.title('Matrice di Confusione con Random Forest - TF-IDF')
 plt.show()
 
 
 # Modello XGBoost con Bag of Words
 print("Modello XGBoost con Bag of Words")
-model_xgb_bag = XGBClassifier(random_state=42, use_label_encoder=False, eval_metric='logloss')
-model_xgb_bag.fit(X_train_bag, y_train)
-print("Accuratezza con XGBoost - Bag of Words:", model_xgb_bag.score(X_test_bag, y_test))
+model_xgb_bag = XGBClassifier(random_state=42, use_label_encoder=False, eval_metric='logloss') # XGBClassifier() è un modello di boosting che ottimizza le prestazioni combinando più alberi decisionali addrestati iterativamente, nelle parentesi i parametri utilizzati
+model_xgb_bag.fit(X_train_bag, y_train) # Addestra il modello XGBoost utilizzando X_train_bag (caratteristiche rappresentate con Bag of Words) e y_train (etichette delle email spam e non spam)
+print("Accuratezza con XGBoost - Bag of Words:", model_xgb_bag.score(X_test_bag, y_test)) # Calcola l'accuratezza (percentuale di previsioni corrette sul totale) del modello confrontando le previsioni con le etichette reali
 
-y_pred_bag = model_xgb_bag.predict(X_test_bag)
+y_pred_bag = model_xgb_bag.predict(X_test_bag) # Utilizza il modello addestrato per effettuare previsioni sulle email di test rappresentate con Bag of Words
 print("Report di classificazione con XGBoost - Bag of Words:")
-print(classification_report(y_test, y_pred_bag))
+print(classification_report(y_test, y_pred_bag)) # Genera un riepilogo delle prestazioni del modello (Precisione,richiamo, F1-Score,supporto)
 
 conf_matrix_bag = confusion_matrix(y_test, y_pred_bag)
 sns.heatmap(conf_matrix_bag, annot=True, fmt='d', cmap='Blues')
@@ -234,11 +234,11 @@ plt.show()
 
 # Modello XGBoost con TF-IDF
 print("Modello XGBoost con TF-IDF")
-model_xgb_tfidf = XGBClassifier(random_state=42, use_label_encoder=False, eval_metric='logloss')
-model_xgb_tfidf.fit(X_train_tfidf, y_train)
-print("Accuratezza con XGBoost - TF-IDF:", model_xgb_tfidf.score(X_test_tfidf, y_test))
+model_xgb_tfidf = XGBClassifier(random_state=42, use_label_encoder=False, eval_metric='logloss') # XGBClassifier() è un modello di boosting ottimizzato che costruisce alberi decisionali iterativamente per minimizzare la perdita
+model_xgb_tfidf.fit(X_train_tfidf, y_train) # Addestra il modello XGBoost sui dati di training
+print("Accuratezza con XGBoost - TF-IDF:", model_xgb_tfidf.score(X_test_tfidf, y_test)) #score calcola  l'accuratezza confrontando le previsioni con le etichette reali (mostra la percentuale di previsioni corrette sul totale)
 
-y_pred_tfidf = model_xgb_tfidf.predict(X_test_tfidf)
+y_pred_tfidf = model_xgb_tfidf.predict(X_test_tfidf) # Utilizza il modello addestrato per effettuare previsioni sui dati di test rappresentati con TF-IDF
 print("Report di classificazione con XGBoost - TF-IDF:")
 print(classification_report(y_test, y_pred_tfidf))
 
@@ -250,13 +250,13 @@ plt.show()
 
 # Modello SVM con Bag of Words
 print("Modello SVM con Bag of Words")
-model_svm_bag = SVC(kernel='linear', probability=True, random_state=42)
-model_svm_bag.fit(X_train_bag, y_train)
-print("Accuratezza con SVM - Bag of Words:", model_svm_bag.score(X_test_bag, y_test))
+model_svm_bag = SVC(kernel='linear', probability=True, random_state=42) # SVC() è una classe di Support Vector Classifier della libreria Scikit-learn
+model_svm_bag.fit(X_train_bag, y_train) # Addestra il modello SVM
+print("Accuratezza con SVM - Bag of Words:", model_svm_bag.score(X_test_bag, y_test)) # Calcola l'accuratezza confrontando le previsioni del modello con le etichette reali
 
-y_pred_bag = model_svm_bag.predict(X_test_bag)
+y_pred_bag = model_svm_bag.predict(X_test_bag) # Utilizza il modello addestrato per fare previsioni sulle caratteristiche testate con Bag of Words
 print("Report di classificazione con SVM - Bag of Words:")
-print(classification_report(y_test, y_pred_bag))
+print(classification_report(y_test, y_pred_bag)) 
 
 conf_matrix_bag = confusion_matrix(y_test, y_pred_bag)
 sns.heatmap(conf_matrix_bag, annot=True, fmt='d', cmap='Blues')
@@ -266,10 +266,10 @@ plt.show()
 # Modello SVM con TF-IDF
 print("Modello SVM con TF-IDF")
 model_svm_tfidf = SVC(kernel='linear', probability=True, random_state=42)
-model_svm_tfidf.fit(X_train_tfidf, y_train)
-print("Accuratezza con SVM - TF-IDF:", model_svm_tfidf.score(X_test_tfidf, y_test))
+model_svm_tfidf.fit(X_train_tfidf, y_train) # Addestra il modello utilizzando X_train_tfidf (caratteristiche rappresentate come TF-IDF) e y_train (etichette di classificazione spam o non spam)
+print("Accuratezza con SVM - TF-IDF:", model_svm_tfidf.score(X_test_tfidf, y_test)) # Calcola l'accuratezza confrontando le previsioni con le etichette reali e restituisce la percentuale di previsioni corrette
 
-y_pred_tfidf = model_svm_tfidf.predict(X_test_tfidf)
+y_pred_tfidf = model_svm_tfidf.predict(X_test_tfidf) # Effettua previsioni sui dati di test basati su TF-IDF
 print("Report di classificazione con SVM - TF-IDF:")
 print(classification_report(y_test, y_pred_tfidf))
 
@@ -282,7 +282,7 @@ plt.show()
 #------------------CONFRONTO DELLE ACCURATEZZE------------------
 
 # Salviamo le accuratezze dei modelli
-accuracies = {
+accuracies = { # Nel dizionario accuracies ogni chiave rappresenta un modello specifico con la tecnica di rappresentazione del testo (Bag of Words o TF-IDF) e i valori sono le accuratezze calcolate con score per ogni modello
     "Naive Bayes (Bag of Words)": model_bag_naive.score(X_test_bag, y_test),
     "Naive Bayes (TF-IDF)": model_tfidf_naive.score(X_test_tfidf, y_test),
     "Random Forest (Bag of Words)": model_forest_bag.score(X_test_bag, y_test),
